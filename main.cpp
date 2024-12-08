@@ -12,7 +12,7 @@ int main() {
     start_color();
     cbreak();
     noecho();
-    timeout(50);
+    timeout(0);
     curs_set(0);
     char key;
 
@@ -26,26 +26,35 @@ int main() {
     screens.push_back(Screen("Menu", maxy/4, maxx, 0, 0));
     screens.push_back(Screen("Game", maxy/2 + maxy/6, maxx, maxy/4-1, 0));
     screens.push_back(Screen("Tooltips", maxy/6, maxx, maxy-maxy/6, 0));
+    nodelay(screens.at(0).screen, true);
+    nodelay(screens.at(1).screen, true);
+    nodelay(screens.at(2).screen, true);
 
-    int screen;
 
-    for (Screen item : screens) {
-	box(item.screen, 0, 0);
+    int screendex;
+
+    for (Screen screen : screens) {
+	box(screen.screen, 0, 0);
+	mvwprintw(screen.screen, 0, 2, screen.name.c_str());
     }
 
-    screen = 0;
+    screendex = 0;
     bool running = true;
     while(running) {
-	key = wgetch(screens.at(screen).screen);
+	key = wgetch(screens.at(screendex).screen);
 	switch (key) {
 	    case '\t':
-		mvwprintw(screens.at(screen).screen, 0, 2, screens.at(screen).name.c_str());
-		screen = screen < 2 ? screen < 1 ? 1 : 2 : 0;
+		screendex = screendex < 2 ? screendex < 1 ? 1 : 2 : 0;
 		break;
 	    case 'q':
 		running = false;
 		break;
 	    default: continue;
+	}
+
+	for (Screen screen : screens) {
+	    wgetch(screen.screen);
+	    wrefresh(screen.screen);
 	}
     }
 
