@@ -20,10 +20,8 @@ class Cursor {
 	    wattron(screen, COLOR_PAIR(2));
 	    // A nested for loop to put boxes only around the edge of the cursor
 	    for (int i = pos_y; i < pos_y + size; i++) {
-		for (int j = pos_x; j < pos_x + width; j++) {
-		    if (i == pos_y or i == pos_y + size-1 or j == pos_x or j == pos_x + width-1) {
-			mvwprintw(screen, i, j, "0");
-		    }
+		if (i == pos_y or i == pos_y + size-1) {
+		    mvwprintw(screen, i, pos_x, "0");
 		}
 	    }
 	    // Always turn off the color attributes when finished
@@ -52,15 +50,15 @@ class Cursor {
 		    }
 		    break;
 		case up:
-		    pos_y -= size;
+		    pos_y -= size + 1;
 		    if (pos_y < 2) {
-			pos_y += size;
+			pos_y += size + 1;
 		    }
 		    break;
 		case down:
-		    pos_y += size;
+		    pos_y += size + 1;
 		    if (pos_y + size > max_y-2) {
-			pos_y -= size;
+			pos_y -= size + 1;
 		    }
 		    break;
 	    }
