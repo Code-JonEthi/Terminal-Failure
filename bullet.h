@@ -9,12 +9,13 @@ struct Bullet {
     int index;
     int damage;
     int type;
-    long spawn_time;
+    long last_time;
     int posx;
     int pos[2] = {0};
 
     void update(long time) {
-	if ((time + spawn_time) % 50 == 0 && (time + spawn_time) % 50 == 0) {
+	if (time >= last_time + 25) {
+	    last_time = time;
 	    pos[1] += 1;
 	}
     }
@@ -28,7 +29,7 @@ struct Bullet {
     Bullet(int type, int y, int x, int index, long time) {
 	this->pos[0] += y;
 	this->pos[1] += x;
-	spawn_time = time;
+	last_time = time;
 	this->type = type;
 	this->index = index;
     }

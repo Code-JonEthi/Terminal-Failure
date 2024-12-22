@@ -140,19 +140,19 @@ int main() {
 	for (auto term : termplates) {
 	    term.print(screens[menu]);
 	}
-	for (auto term : terms) {
+	for (int i = 0; i < terms.size(); i++) {
 	    // "Kill" the term
-	    if (term.health <= 0) terms.erase(terms.begin() + term.index);
+	    if (terms[i].health <= 0) terms.erase(terms.begin() + i);
 
 	    // Shoot bullets
-	    if (time.count() >= term.shoot_time) {
-		term.shoot_time += 4000;
-		Bullet b(term.bullet, term.bullet_pos[0], term.bullet_pos[1], bullets.size(), time.count());
+	    if (time.count() >= terms[i].shoot_time + 4000) {
+		terms[i].shoot_time = time.count();
+		Bullet b(terms[i].bullet, terms[i].bullet_pos[0], terms[i].bullet_pos[1], bullets.size(), time.count());
 		bullets.push_back(b);
 	    }
 
 	    // Render term
-	    term.print(screens[game]);
+	    terms[i].print(screens[game]);
 	}
 
 	// Update and render the bullets
