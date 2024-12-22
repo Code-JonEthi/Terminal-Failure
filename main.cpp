@@ -1,121 +1,187 @@
 #include <iostream>
+#include <chrono>
 #include <vector>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <curses.h>
-#include "screens.h"
+#include <stdbool.h>
+#include <thread>
 #include "cursor.h"
+#include "terms.h"
 
-void render_tiles(WINDOW *screen, int size);
+using namespace std::chrono;
+using namespace std::chrono_literals;
+
+struct Tile {
+    int pos[2];
+    int size;
+    int width;
+    bool occupied;
+    
+    void print(WINDOW *screen);
+};
+
+void Tile::print(WINDOW *screen) {
+    for (int i = -1; i < size + 1; i ++) {
+	if (i == -1 or i == size) {
+	    mvwprintw(screen, pos[0] + i + 1, pos[1], "+--------------+");
+	} else {
+	    mvwprintw(screen, pos[0] + i + 1, pos[1], "|              |");
+	}
+    }
+}
 
 int main() {
-    // Initialize NCurses and it's settings
+    std::this_thread::sleep_for(0.6ms);
     initscr();
-    start_color();
     cbreak();
+    start_color();
     noecho();
-    timeout(0);
-    curs_set(0);
-    refresh();
+    keypad(stdscr, true);
+    timeout(1);
+    curs_set(FALSE);
 
-    // Variable to keep track of keyboard presses
-    char key;
+    init_pair(1, COLOR_RED, COLOR_BLACK);
+    init_pair(2, COLOR_WHITE, COLOR_WHITE);
+    init_pair(3, COLOR_BLUE, COLOR_BLACK);
+
+    int maxes[2];
+    getmaxyx(stdscr, maxes[0], maxes[1]);
+
+    // Init windows
+    enum Pages {menu, game, tips};
+    WINDOW *screens[2];
+    screens[menu] = newwin(maxes[0]/4, maxes[1], 0, 0);
+    screens[game] = newwin(maxes[0] - maxes[0]/4, maxes[1], maxes[0]/4, 0);
 
     const int TILE_SIZE = 7;
-    int maxy, maxx;
-    getmaxyx(stdscr, maxy, maxx);
-
-    // Initialize color pairs
-    init_pair(1, COLOR_BLACK, COLOR_WHITE);
-    init_pair(2, COLOR_WHITE, COLOR_WHITE);
-    attron(COLOR_PAIR(1));
-
-    // Initialize the 3 different screens and add them to a vector
-    // Naming convention for these is horrible I know.
-    std::vector<Screen> screens;
-    // Enumerator to easily keep track of the indexes of the different screens
-    enum Pages {menu, game, tooltips};
-    screens.push_back(Screen("Menu", maxy/4, maxx, 0, 0));
-    screens.push_back(Screen("Game", maxy/2 + maxy/6, maxx, maxy/4-1, 0));
-    screens.push_back(Screen("Tooltips", maxy/6, maxx, maxy-maxy/6, 0));
-    nodelay(screens.at(menu).screen, true);
-    nodelay(screens.at(game).screen, true);
-    nodelay(screens.at(tooltips).screen, true);
+    const int WIDTH = TILE_SIZE * 2;
+    int gamemaxes[2];
     
-    // Initialize the cursor to visually select tiles on the grid
-    Cursor cursor(2, 2, TILE_SIZE - 2);
+    getmaxyx(screens[game], gamemaxes[0], gamemaxes[1]);
+    Tile tiles[gamemaxes[0] / TILE_SIZE][gamemaxes[1] / WIDTH];
 
-    // screendex = screen index, used to fetch screens from the vector
+    // Init timer
+    auto t1 = high_resolution_clock::now();
+    auto time = duration_cast<milliseconds>(t1.time_since_epoch());
+    
+    // Init tiles
+    const int ROWS = 4;
+    const int COLS = 12;
+    for (int i = 0; i < ROWS; i++) {
+	for (int j = 0; j < COLS; j++) {
+	    Tile t;
+	    t.pos[0] = i * TILE_SIZE + i + 1;
+	    t.pos[1] = j * WIDTH + j + 1;
+
+	    t.size = TILE_SIZE;
+	    t.width = WIDTH;
+	    t.occupied = false;
+	    t.print(screens[game]);
+	    tiles[i][j] = t;
+	}
+    }
+
+    // Init Terms
+    int type = 1;
+    std::vector<Term> terms;
+    std::vector<Term> termplates;
+
+    // Init bullet vector
+    std::vector<Bullet> bullets;
+
+    // Init cursor
+    Cursor cursor(1, 1, TILE_SIZE); 
+
+    int key;
     int screendex;
-    screendex = menu;
-
-    // Main gameplay loop
+    screendex = game;
     bool running = true;
-    while(running) {
+    while (running) {
+	// Get elapsed time
+	t1 = high_resolution_clock::now();
+	time = duration_cast<milliseconds>(t1.time_since_epoch());
 
-	// Input fetching
-	mvprintw(5, 5, "Test");
-	refresh();
-	key = wgetch(screens.at(screendex).screen);
-	switch (key) {
-	    // Switch pages with TAB
-	    case '\t':
-		screendex = screendex < tooltips ? screendex < game ? game : tooltips : menu;
-		cursor.next_tab();
-		break;
-	    // Quit game with q
-	    case 'q':
-		running = false;
-		break;
-	    // Vim Motions for cursor movement
-	    case 'h':
-		cursor.move(cursor.left, screens.at(screendex).screen);
-		break;
-	    case 'j':
-		cursor.move(cursor.down, screens.at(screendex).screen);
-		break;
-	    case 'k':
-		cursor.move(cursor.up, screens.at(screendex).screen);
-		break;
-	    case 'l':
-		cursor.move(cursor.right, screens.at(screendex).screen);
-		break;
-	    // literally nothing idk why this is here
-	    default: continue;
+	// Input handling
+	key = getch();
+	if (key == 'q') {
+	    running = false;
+	}
+	if (key == 'h') cursor.move(Cursor::left, ROWS, COLS);
+	if (key == 'j') cursor.move(Cursor::down, ROWS, COLS);
+	if (key == 'k') cursor.move(Cursor::up, ROWS, COLS);
+	if (key == 'l') cursor.move(Cursor::right, ROWS, COLS);
+	if (key == 't') {
+	    if (!tiles[cursor.pos[0]][cursor.pos[1]].occupied) {
+		Term t(type, cursor.pos[0], cursor.pos[1], terms.size(), time.count());
+		tiles[cursor.pos[0]][cursor.pos[1]].occupied = true;
+		terms.push_back(t);
+	    }
+	}
+	if (key == '1') type = 1;
+	if (key == '2') type = 2;
+	if (key == '3') type = 3;
+	if (key == '4') type = 4;
+
+	// Render each page
+	for (WINDOW *screen :screens) {
+	    werase(screen);
+	    box(screen, 0, 0);
+	}
+	mvwprintw(screens[menu], 0, 2, "Menu");
+	mvwprintw(screens[game], 0, 2, "Game");
+
+	// Render the background
+	for (int i = 0; i < ROWS; i++) {
+	    for (int j = 0; j < COLS; j++) {
+		tiles[i][j].print(screens[game]);
+	    }
 	}
 
-	// Clear and redraw each screen
-	for (Screen screen : screens) {
-	    werase(screen.screen);
-	    screen.draw();
-	    wnoutrefresh(screen.screen);
+	// Update and Render the Terms
+	for (auto term : termplates) {
+	    term.print(screens[menu]);
+	}
+	for (auto term : terms) {
+	    // "Kill" the term
+	    if (term.health <= 0) terms.erase(terms.begin() + term.index);
+
+	    // Shoot bullets
+	    if (time.count() >= term.shoot_time) {
+		term.shoot_time += 4000;
+		Bullet b(term.bullet, term.bullet_pos[0], term.bullet_pos[1], bullets.size(), time.count());
+		bullets.push_back(b);
+	    }
+
+	    // Render term
+	    term.print(screens[game]);
 	}
 
-	// Draw all other elements
-	render_tiles(screens.at(game).screen, TILE_SIZE);
-	// Render the cursor last
-	cursor.draw(screens.at(screendex).screen);
+	// Update and render the bullets
+	for (int i = 0; i < bullets.size(); i++) {
+	    // "Kill" bullet
+	    //if (bullet.pos[1] >= gamemaxes[1] or time - bullet.spawn_time >= 10000) bullets.erase(bullets.begin() + bullet.index);
 
+	    // Update the bullet
+	    bullets[i].update(time.count());
+
+	    // Render the bullet
+	    bullets[i].print(screens[game]);
+	}
+
+	// Update and render the cursor
+	wattron(screens[screendex], COLOR_PAIR(cursor.attr));
+	cursor.print(screens[screendex]);
+	wattroff(screens[screendex], COLOR_PAIR(cursor.attr));
+
+	for (WINDOW *screen :screens) {
+	    wnoutrefresh(screen);
+	}
 	doupdate();
     }
 
-    // Turn of the color attribute and end the windows
-    attroff(COLOR_PAIR(1));
-    for (Screen page : screens) {
-	delwin(page.screen);
+    for (WINDOW *screen : screens) {
+	delwin(screen);	
     }
     endwin();
+	
     return 0;
-}
-
-void render_tiles(WINDOW *screen, int size) {
-    int maxy, maxx, width;
-    getmaxyx(screen, maxy, maxx);
-    width = size + size / 2 - 2;
-
-    for (int i = 1; i < maxy - 1; i += size - 1) {
-	for (int j = 1; j < maxx - 1; j += width) {
-	    mvwprintw(screen, i, j, "0");
-	}
-    }
 }
