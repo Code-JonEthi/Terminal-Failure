@@ -15,6 +15,7 @@ class Cursor {
 	enum Directions {left, right, up, down};
 
 	void print(WINDOW *screen) {
+	    wattron(screen, COLOR_PAIR(2));
 	    for (int i = 0; i < size + 2; i++) {
 		if (i == 0 or i == size + 1) mvwprintw(screen, (pos[0] * size + 1 + pos[0]) + i, (pos[1] * width + 1 + pos[1]), "0000000000000000");
 		else {
@@ -22,6 +23,7 @@ class Cursor {
 		    mvwprintw(screen, (pos[0] * size + 1 + pos[0]) + i, (pos[1] * width + 1 + pos[1]) + width + 1, "0");
 		}
 	    }
+	    wattroff(screen, COLOR_PAIR(2));
 	}
 
 	void move(int direction, int rows, int cols) {

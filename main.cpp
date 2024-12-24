@@ -42,15 +42,18 @@ int main() {
     init_pair(1, COLOR_RED, COLOR_BLACK);
     init_pair(2, COLOR_WHITE, COLOR_WHITE);
     init_pair(3, COLOR_BLUE, COLOR_BLACK);
+    init_pair(4, COLOR_BLACK, COLOR_WHITE);
 
     int maxes[2];
     getmaxyx(stdscr, maxes[0], maxes[1]);
+    // Init game variables
+    int cash = 1000;
 
     // Init windows
-    enum Pages {menu, game, tips};
+    enum Pages {menu, game};
     WINDOW *screens[2];
-    screens[menu] = newwin(maxes[0]/4, maxes[1], 0, 0);
-    screens[game] = newwin(maxes[0] - maxes[0]/4, maxes[1], maxes[0]/4, 0);
+    screens[menu] = newwin(maxes[0]/4 + 2, maxes[1], 0, 0);
+    screens[game] = newwin(maxes[0] - maxes[0]/4 - 2, maxes[1], maxes[0]/4 + 2, 0);
 
     const int TILE_SIZE = 7;
     const int WIDTH = TILE_SIZE * 2;
@@ -64,8 +67,8 @@ int main() {
     auto time = duration_cast<milliseconds>(t1.time_since_epoch());
     
     // Init tiles
-    const int ROWS = 4;
-    const int COLS = 12;
+    const int ROWS = 3;
+    const int COLS = 10;
     for (int i = 0; i < ROWS; i++) {
 	for (int j = 0; j < COLS; j++) {
 	    Tile t;
@@ -83,13 +86,21 @@ int main() {
     // Init Terms
     int type = 1;
     std::vector<Term> terms;
-    std::vector<Term> termplates;
 
+    // Init Termplates (the terms on the menu
+    std::vector<Term> termplates;
+    termplates.push_back(Term(0, 0, 0, 0));
+    termplates.push_back(Term(1, 0, 1, 0));
+    termplates.push_back(Term(2, 0, 2, 0));
+    termplates.push_back(Term(3, 0, 3, 0));
+    termplates.push_back(Term(4, 0, 4, 0));
+    Cursor term_curse(0, 0, TILE_SIZE); 
+    
     // Init bullet vector
     std::vector<Bullet> bullets;
 
     // Init cursor
-    Cursor cursor(1, 1, TILE_SIZE); 
+    Cursor cursor(0, 0, TILE_SIZE); 
 
     int key;
     int screendex;
@@ -109,17 +120,21 @@ int main() {
 	if (key == 'j') cursor.move(Cursor::down, ROWS, COLS);
 	if (key == 'k') cursor.move(Cursor::up, ROWS, COLS);
 	if (key == 'l') cursor.move(Cursor::right, ROWS, COLS);
-	if (key == 't') {
-	    if (!tiles[cursor.pos[0]][cursor.pos[1]].occupied) {
-		Term t(type, cursor.pos[0], cursor.pos[1], terms.size(), time.count());
-		tiles[cursor.pos[0]][cursor.pos[1]].occupied = true;
-		terms.push_back(t);
+	if (cash >= termplates[type].cost) {
+	    if (key == 't') {
+		if (!tiles[cursor.pos[0]][cursor.pos[1]].occupied) {
+		    cash -= termplates[type].cost;
+		    Term t(type, cursor.pos[0], cursor.pos[1], time.count());
+		    tiles[cursor.pos[0]][cursor.pos[1]].occupied = true;
+		    terms.push_back(t);
+		}
 	    }
 	}
-	if (key == '1') type = 1;
-	if (key == '2') type = 2;
-	if (key == '3') type = 3;
-	if (key == '4') type = 4;
+	if (key == '1') type = 0;
+	if (key == '2') type = 1;
+	if (key == '3') type = 2;
+	if (key == '4') type = 3;
+	if (key == '5') type = 4;
 
 	// Render each page
 	for (WINDOW *screen :screens) {
@@ -136,19 +151,39 @@ int main() {
 	    }
 	}
 
-	// Update and Render the Terms
+	// Render menu bar
 	for (auto term : termplates) {
+	    // Show term
 	    term.print(screens[menu]);
+	    // Highlight the selected term
+	    term_curse.pos[1] = type;
+	    term_curse.print(screens[menu]);
+	    // Render term name and cost
+	    wattron(screens[menu], COLOR_PAIR(4));
+	    mvwprintw(screens[menu], term.pos[0] - 1, (WIDTH - 9) / 2 + term.pos[1], "Cost: %i", term.cost);
+	    mvwprintw(screens[menu], term.pos[0] + 7, (WIDTH - term.name.size()) / 2 + term.pos[1], term.name.data());
+	    wattroff(screens[menu], COLOR_PAIR(4));
 	}
+	wattron(screens[menu], COLOR_PAIR(4));
+	mvwprintw(screens[menu], 3, maxes[1] - 15, "Cash: %i", cash);
+	wattroff(screens[menu], COLOR_PAIR(4));
+
+	// Update and Render the Terms
 	for (int i = 0; i < terms.size(); i++) {
 	    // "Kill" the term
 	    if (terms[i].health <= 0) terms.erase(terms.begin() + i);
 
+	    int money_type = 4;
 	    // Shoot bullets
-	    if (time.count() >= terms[i].shoot_time + 4000) {
+	    if (time.count() >= terms[i].shoot_time + terms[i].cooldown) {
 		terms[i].shoot_time = time.count();
 		Bullet b(terms[i].bullet, terms[i].bullet_pos[0], terms[i].bullet_pos[1], bullets.size(), time.count());
 		bullets.push_back(b);
+		if (terms[i].type == 1) {
+		    Bullet b(terms[i].bullet, terms[i].bullet_pos[0], terms[i].bullet_pos[1] - 3, bullets.size(), time.count());
+		    bullets.push_back(b);
+		}
+		if (terms[i].type == 4) cash += 50;
 	    }
 
 	    // Render term
@@ -158,19 +193,17 @@ int main() {
 	// Update and render the bullets
 	for (int i = 0; i < bullets.size(); i++) {
 	    // "Kill" bullet
-	    //if (bullet.pos[1] >= gamemaxes[1] or time - bullet.spawn_time >= 10000) bullets.erase(bullets.begin() + bullet.index);
+	    if (bullets[i].pos[1] >= gamemaxes[1] || time.count() >= bullets[i].spawn_time + 4000) bullets.erase(bullets.begin() + i);
 
 	    // Update the bullet
-	    bullets[i].update(time.count());
+	    if (bullets[i].type != 4) bullets[i].update(time.count());
 
 	    // Render the bullet
 	    bullets[i].print(screens[game]);
 	}
 
 	// Update and render the cursor
-	wattron(screens[screendex], COLOR_PAIR(cursor.attr));
 	cursor.print(screens[screendex]);
-	wattroff(screens[screendex], COLOR_PAIR(cursor.attr));
 
 	for (WINDOW *screen :screens) {
 	    wnoutrefresh(screen);
