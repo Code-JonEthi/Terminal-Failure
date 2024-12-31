@@ -11,10 +11,12 @@ public:
     int cost;
     int cooldown;
     int type;
+    int row;
     int attr;
     int bullet;
     int bullet_pos[2];
     int pos[2];
+    int collide_x;
     int size = 7;
     long shoot_time = 0;
     std::string name;
@@ -30,11 +32,11 @@ public:
 
 
     Term(int type, int row, int col, long time) {
+	this->row = row;
 	pos[0] = row * size + row + 2;
 	pos[1] = col * size * 2 + col + 2;
 	this->type = type;
 	shoot_time += time;
-	health = 10;
 
 	if (type == 0) {
 	    image[0] = "     _____    ";
@@ -48,6 +50,8 @@ public:
 	    bullet = 0;
 	    bullet_pos[0] = pos[0] + 3;
 	    bullet_pos[1] = pos[1] + 9;
+	    collide_x = pos[1] + 12;
+	    health = 100;
 	    cost = 100;
 	    cooldown = 4000;
 	    name = "C-Shooter";
@@ -64,7 +68,9 @@ public:
 	    bullet = 0;
 	    bullet_pos[0] = pos[0] + 3;
 	    bullet_pos[1] = pos[1] + 10;
+	    collide_x = pos[1] + 12;
 	    cost = 200;
+	    health = 100;
 	    cooldown = 4000;
 	    name = "C-Squared";
 	}
@@ -80,6 +86,8 @@ public:
 	    bullet = 1;
 	    bullet_pos[0] = pos[0] + 3;
 	    bullet_pos[1] = pos[1] + 7;
+	    collide_x = pos[1] + 13;
+	    health = 50;
 	    cost = 150;
 	    cooldown = 4000;
 	    name = "P-ice-thon";
@@ -96,7 +104,9 @@ public:
 	    bullet = 2;
 	    bullet_pos[0] = pos[0] + 3;
 	    bullet_pos[1] = pos[1] + 11;
+	    collide_x = pos[1] + 10;
 	    cost = 175;
+	    health = 200;
 	    cooldown = 4000;
 	    name = "Tetanis Rust";
 	}	
@@ -112,7 +122,9 @@ public:
 	    bullet = 4;
 	    bullet_pos[0] = pos[0] + 2;
 	    bullet_pos[1] = pos[1] + 6;
+	    collide_x = pos[1] + 13;
 	    cost = 50;
+	    health = 50;
 	    cooldown = 15000;
 	    name = "Pay-HP";
 	}
