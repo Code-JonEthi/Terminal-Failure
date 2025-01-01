@@ -81,7 +81,7 @@ int main() {
     int maxes[2];
     getmaxyx(stdscr, maxes[0], maxes[1]);
     // Init game variables
-    int cash = 1000;
+    int cash = 200;
 
     // Init windows
     enum Pages {menu, game};

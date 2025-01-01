@@ -79,8 +79,8 @@ public:
 	pos[1] = 10 * WIDTH + 10 + 2;
 	attr = 0;
 	if (type == 0) {
-	    health = 150;
-	    speed = 200;
+	    health = 200;
+	    speed = 250;
 	    image[0] = "     _     _  ";
 	    image[1] = "    /__   /_  ";
 	    image[2] = " *_/   \\_|  \\ ";
@@ -91,7 +91,7 @@ public:
 	}
 	if (type == 1) {
 	    health = 100;
-	    speed = 100;
+	    speed = 200;
 	    image[0] = "              ";
 	    image[1] = "              ";
 	    image[2] = "     _____    ";
@@ -101,8 +101,8 @@ public:
 	    image[6] = "              ";
 	}
 	if (type == 2) {
-	    health = 200;
-	    speed = 300;
+	    health = 300;
+	    speed = 450;
 	    image[0] = "              ";
 	    image[1] = "              ";
 	    image[2] = "     _______  ";
@@ -113,7 +113,7 @@ public:
 	}
 	if (type == 3) {
 	    health = 150;
-	    speed = 50;
+	    speed = 125;
 	    image[0] = "   ___ ___  _ ";
 	    image[1] = "  (*__|_  \\/ \\";
 	    image[2] = " /      \\  \\_/";
