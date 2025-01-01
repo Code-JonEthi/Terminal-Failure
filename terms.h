@@ -58,7 +58,7 @@ public:
 	    health = 100;
 	    cost = 100;
 	    cooldown = 8000;
-	    shoot_cooldown = 4000;
+	    shoot_cooldown = 3000;
 	    name = "C-Shooter";
 	}
 	if (type == 1) {
@@ -77,7 +77,7 @@ public:
 	    cost = 200;
 	    health = 100;
 	    cooldown = 12000;
-	    shoot_cooldown = 4000;
+	    shoot_cooldown = 3000;
 	    name = "C-Squared";
 	}
 	if (type == 2) {
@@ -134,7 +134,7 @@ public:
 	    cost = 50;
 	    health = 50;
 	    cooldown = 8000;
-	    shoot_cooldown = 15000;
+	    shoot_cooldown = 10000;
 	    name = "Pay-HP";
 	}
 

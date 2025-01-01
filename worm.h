@@ -54,7 +54,7 @@ public:
 
     template<typename O, typename T>
     void update(std::vector<O> *objects, T* tiles, long time) {
-	if (last_time + (speed * (slowed ? 1.5 : 1)) <= time) {
+	if (last_time + (speed * (slowed ? 2 : 1)) <= time) {
 	    last_time = time;
 	    move(objects, tiles, time);
 	}
@@ -80,7 +80,7 @@ public:
 	attr = 0;
 	if (type == 0) {
 	    health = 200;
-	    speed = 250;
+	    speed = 500;
 	    image[0] = "     _     _  ";
 	    image[1] = "    /__   /_  ";
 	    image[2] = " *_/   \\_|  \\ ";
@@ -91,7 +91,7 @@ public:
 	}
 	if (type == 1) {
 	    health = 100;
-	    speed = 200;
+	    speed = 400;
 	    image[0] = "              ";
 	    image[1] = "              ";
 	    image[2] = "     _____    ";
@@ -102,7 +102,7 @@ public:
 	}
 	if (type == 2) {
 	    health = 300;
-	    speed = 450;
+	    speed = 600;
 	    image[0] = "              ";
 	    image[1] = "              ";
 	    image[2] = "     _______  ";
@@ -113,7 +113,7 @@ public:
 	}
 	if (type == 3) {
 	    health = 150;
-	    speed = 125;
+	    speed = 200;
 	    image[0] = "   ___ ___  _ ";
 	    image[1] = "  (*__|_  \\/ \\";
 	    image[2] = " /      \\  \\_/";
