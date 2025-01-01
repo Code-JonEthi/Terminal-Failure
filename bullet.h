@@ -33,6 +33,8 @@ struct Bullet {
 	this->pos[1] += x;
 	this->row = row;
 	damage = 10;
+	if (type == 3) damage = 15;
+	if (type == 4) damage = 0;
 	last_time = time;
 	spawn_time = time;
 	this->type = type;

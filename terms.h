@@ -9,6 +9,7 @@ class Term {
 public:
     int health;
     int cost;
+    int shoot_cooldown;
     int cooldown;
     long last_placed = 0;
     int type;
@@ -56,7 +57,8 @@ public:
 	    collide_x = pos[1] + 12;
 	    health = 100;
 	    cost = 100;
-	    cooldown = 4000;
+	    cooldown = 8000;
+	    shoot_cooldown = 4000;
 	    name = "C-Shooter";
 	}
 	if (type == 1) {
@@ -74,7 +76,8 @@ public:
 	    collide_x = pos[1] + 12;
 	    cost = 200;
 	    health = 100;
-	    cooldown = 8000;
+	    cooldown = 12000;
+	    shoot_cooldown = 4000;
 	    name = "C-Squared";
 	}
 	if (type == 2) {
@@ -92,7 +95,8 @@ public:
 	    collide_x = pos[1] + 13;
 	    health = 50;
 	    cost = 150;
-	    cooldown = 6000;
+	    cooldown = 10000;
+	    shoot_cooldown = 4000;
 	    name = "P-ice-thon";
 	}
 	if (type == 3) {
@@ -110,7 +114,8 @@ public:
 	    collide_x = pos[1] + 10;
 	    cost = 175;
 	    health = 200;
-	    cooldown = 6000;
+	    cooldown = 10000;
+	    shoot_cooldown = 5000;
 	    name = "Tetanis Rust";
 	}	
 	if (type == 4) {
@@ -128,7 +133,8 @@ public:
 	    collide_x = pos[1] + 13;
 	    cost = 50;
 	    health = 50;
-	    cooldown = 4000;
+	    cooldown = 8000;
+	    shoot_cooldown = 15000;
 	    name = "Pay-HP";
 	}
 

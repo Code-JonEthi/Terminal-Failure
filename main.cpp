@@ -75,6 +75,8 @@ int main() {
     init_pair(3, COLOR_BLUE, COLOR_BLACK);
     init_pair(4, COLOR_BLACK, COLOR_WHITE);
     init_pair(5, COLOR_WHITE, COLOR_RED);
+    init_pair(6, COLOR_WHITE, COLOR_GREEN);
+    init_pair(7, COLOR_WHITE, COLOR_BLUE);
 
     int maxes[2];
     getmaxyx(stdscr, maxes[0], maxes[1]);
@@ -176,16 +178,16 @@ int main() {
 		running = false;
 		break;
 	    }
-	    if (key == 'h') cursor.move(Cursor::left, ROWS, COLS);
-	    if (key == 'j') cursor.move(Cursor::down, ROWS, COLS);
-	    if (key == 'k') cursor.move(Cursor::up, ROWS, COLS);
-	    if (key == 'l') cursor.move(Cursor::right, ROWS, COLS);
+	    if (key == 'h' || key == 'a') cursor.move(Cursor::left, ROWS, COLS);
+	    if (key == 'j' || key == 's') cursor.move(Cursor::down, ROWS, COLS);
+	    if (key == 'k' || key == 'w') cursor.move(Cursor::up, ROWS, COLS);
+	    if (key == 'l' || key == 'd') cursor.move(Cursor::right, ROWS, COLS);
 	    if (key == 'p') {
 		gamestate = pause;
 		continue;
 	    }
 	    if (cash >= termplates[type].cost) {
-		if (key == 't') {
+		if (key == 't' || key == ' ') {
 		    if (!tiles[cursor.pos[0]][cursor.pos[1]].occupied && termplates[type].last_placed + termplates[type].cooldown < time.count()) {
 			termplates[type].last_placed = time.count();
 			cash -= termplates[type].cost;
@@ -235,15 +237,21 @@ int main() {
 		mvwprintw(screens[menu], termplates[i].pos[0] + 7, (WIDTH - termplates[i].name.size()) / 2 + termplates[i].pos[1], termplates[i].name.data());
 		wattroff(screens[menu], COLOR_PAIR(4));
 	    }
-	    wattron(screens[menu], COLOR_PAIR(4));
-	    mvwprintw(screens[menu], 2, maxes[1] - 15, "Wave: %i", wave);
-	    mvwprintw(screens[menu], 1, maxes[1] - 15, "Spawned: %i", waves[wave].spawned);
-	    mvwprintw(screens[menu], 3, maxes[1] - 15, "Cash: %i", cash);
-	    mvwprintw(screens[menu], 3, maxes[1] - 40, "Worms: %li", worms.size());
-	    wattroff(screens[menu], COLOR_PAIR(4));
+	    wattron(screens[menu], COLOR_PAIR(6));
+	    mvwprintw(screens[menu], 2, maxes[1]/2, "Cash: %i", cash);
+	    wattroff(screens[menu], COLOR_PAIR(6));
+	    wattron(screens[menu], COLOR_PAIR(7));
+	    mvwprintw(screens[menu], 2, maxes[1]/2+ 15, "Wave: %i", wave);
+	    wattroff(screens[menu], COLOR_PAIR(7));
 
 	    // Update wave
 	    waves[wave].spawn(time.count(), &worms);
+	    if (waves[wave].spawned >= waves[wave].limit) wave += 1;
+	    if (wave >= waves.size()) {
+		won = true;
+		gamestate = end;
+		continue;
+	    }
 
 	    // Update and Render the Terms
 	    for (int i = 0; i < terms.size(); i++) {
@@ -252,7 +260,7 @@ int main() {
 
 		int money_type = 4;
 		// Shoot bullets
-		if (time.count() >= terms[i].shoot_time + terms[i].cooldown) {
+		if (time.count() >= terms[i].shoot_time + terms[i].shoot_cooldown) {
 		    terms[i].shoot_time = time.count();
 		    Bullet b(terms[i].bullet, terms[i].row, terms[i].bullet_pos[0], terms[i].bullet_pos[1], bullets.size(), time.count());
 		    bullets.push_back(b);
@@ -270,10 +278,13 @@ int main() {
 	    // Update and render the worms
 	    for (int i = 0; i < worms.size(); i++) {
 		worms[i].update(&terms, &tiles, time.count());
-		worms[i].print(screens[game]);
-		mvwprintw(screens[menu], 5, gamemaxes[1] - 18, "%li", worms[0].last_time);
+		worms[i].print(screens[game], maxes[1]);
+		if (worms[i].pos[1] < 0) {
+		    won = false;
+		    gamestate = end;
+		    continue;
+		}
 	    }
-	    mvwprintw(screens[menu], 6, gamemaxes[1] - 18, "Time: %li", time.count());
 
 	    // Update and render the bullets
 	    dead.clear();
@@ -348,7 +359,7 @@ int main() {
 	    if (key != ERR) running = false;
 
 	    wattron(screens[game], COLOR_PAIR(4));
-	    if (won) mvwprintw(screens[game], gamemaxes[0]/2-2, gamemaxes[1]/2 - 5, "Game Over :(");
+	    if (!won) mvwprintw(screens[game], gamemaxes[0]/2-2, gamemaxes[1]/2 - 5, "Game Over :(");
 	    else mvwprintw(screens[game], gamemaxes[0]/2-2, gamemaxes[1]/2 - 5, "You Win! :)");
 	    mvwprintw(screens[game], gamemaxes[0]/2, gamemaxes[1]/2 - 9, "Press Any Key To Quit.");
 	    wattroff(screens[game], COLOR_PAIR(4));

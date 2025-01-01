@@ -60,10 +60,11 @@ public:
 	}
     }
 
-    void print(WINDOW *screen) {
+    void print(WINDOW *screen, int maxx) {
+	int len = maxx - pos[1];
 	wattron(screen, COLOR_PAIR(attr));
 	for (int i = 0; i < SIZE; i++) {
-	    mvwprintw(screen, pos[0] + i, pos[1], image[i].data()); 
+	    mvwprintw(screen, pos[0] + i, pos[1], image[i].substr(0, len > 14 ? 14 : len).data()); 
 	}
 	wattroff(screen, COLOR_PAIR(attr));
     }
@@ -79,7 +80,7 @@ public:
 	attr = 0;
 	if (type == 0) {
 	    health = 150;
-	    speed = 550;
+	    speed = 200;
 	    image[0] = "     _     _  ";
 	    image[1] = "    /__   /_  ";
 	    image[2] = " *_/   \\_|  \\ ";
@@ -90,7 +91,7 @@ public:
 	}
 	if (type == 1) {
 	    health = 100;
-	    speed = 500;
+	    speed = 100;
 	    image[0] = "              ";
 	    image[1] = "              ";
 	    image[2] = "     _____    ";
@@ -101,7 +102,7 @@ public:
 	}
 	if (type == 2) {
 	    health = 200;
-	    speed = 800;
+	    speed = 300;
 	    image[0] = "              ";
 	    image[1] = "              ";
 	    image[2] = "     _______  ";
@@ -112,7 +113,7 @@ public:
 	}
 	if (type == 3) {
 	    health = 150;
-	    speed = 300;
+	    speed = 50;
 	    image[0] = "   ___ ___  _ ";
 	    image[1] = "  (*__|_  \\/ \\";
 	    image[2] = " /      \\  \\_/";
