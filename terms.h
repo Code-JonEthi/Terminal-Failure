@@ -10,8 +10,10 @@ public:
     int health;
     int cost;
     int cooldown;
+    long last_placed = 0;
     int type;
     int row;
+    int col;
     int attr;
     int bullet;
     int bullet_pos[2];
@@ -33,6 +35,7 @@ public:
 
     Term(int type, int row, int col, long time) {
 	this->row = row;
+	this->col = col;
 	pos[0] = row * size + row + 2;
 	pos[1] = col * size * 2 + col + 2;
 	this->type = type;
@@ -71,7 +74,7 @@ public:
 	    collide_x = pos[1] + 12;
 	    cost = 200;
 	    health = 100;
-	    cooldown = 4000;
+	    cooldown = 8000;
 	    name = "C-Squared";
 	}
 	if (type == 2) {
@@ -89,7 +92,7 @@ public:
 	    collide_x = pos[1] + 13;
 	    health = 50;
 	    cost = 150;
-	    cooldown = 4000;
+	    cooldown = 6000;
 	    name = "P-ice-thon";
 	}
 	if (type == 3) {
@@ -107,7 +110,7 @@ public:
 	    collide_x = pos[1] + 10;
 	    cost = 175;
 	    health = 200;
-	    cooldown = 4000;
+	    cooldown = 6000;
 	    name = "Tetanis Rust";
 	}	
 	if (type == 4) {
@@ -125,7 +128,7 @@ public:
 	    collide_x = pos[1] + 13;
 	    cost = 50;
 	    health = 50;
-	    cooldown = 15000;
+	    cooldown = 4000;
 	    name = "Pay-HP";
 	}
 

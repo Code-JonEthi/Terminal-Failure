@@ -33,12 +33,13 @@ struct Wave {
     int cooldown_range[2];
     int cooldown;
     int limit;
+    int types;
     int spawned = 0;
     
     void spawn(long time, std::vector<Worm> *worms) {
 	if (spawned <= limit) {
 	    if (last_spawn + cooldown <= time) {
-		int type = rand() % 4;    
+		int type = rand() % types;    
 		int row = rand() % 3;
 		last_spawn = time;
 		spawned += 1;
@@ -48,8 +49,9 @@ struct Wave {
 	}
     }
 
-    Wave(long time, int cooldown_min, int cooldown_max, int limit) {
+    Wave(long time, int cooldown_min, int cooldown_max, int limit, int types) {
 	this->limit = limit;
+	this->types = types;
 	cooldown_range[0] = cooldown_min;
 	cooldown_range[1] = cooldown_max;
 	cooldown = cooldown_min;
@@ -72,6 +74,7 @@ int main() {
     init_pair(2, COLOR_WHITE, COLOR_WHITE);
     init_pair(3, COLOR_BLUE, COLOR_BLACK);
     init_pair(4, COLOR_BLACK, COLOR_WHITE);
+    init_pair(5, COLOR_WHITE, COLOR_RED);
 
     int maxes[2];
     getmaxyx(stdscr, maxes[0], maxes[1]);
@@ -85,13 +88,14 @@ int main() {
     screens[menu] = newwin(maxes[0]/4 + 2, maxes[1], 0, 0);
     screens[game] = newwin(maxes[0] - maxes[0]/4 - 2, maxes[1], maxes[0]/4 + 2, 0);
     int gamestate = start;
+    bool won = false;
 
     const int TILE_SIZE = 7;
     const int WIDTH = TILE_SIZE * 2;
     int gamemaxes[2];
     
     getmaxyx(screens[game], gamemaxes[0], gamemaxes[1]);
-    Tile tiles[gamemaxes[0] / TILE_SIZE][gamemaxes[1] / WIDTH];
+    Tile tiles[3][10];
 
     // Init timer
     auto t1 = high_resolution_clock::now();
@@ -136,7 +140,11 @@ int main() {
 
     // Init Waves
     std::vector<Wave> waves;
-    waves.push_back(Wave(time.count(), 6000, 10000, 50));
+    waves.push_back(Wave(time.count(), 10000, 18000, 15, 2));
+    waves.push_back(Wave(time.count(), 8000, 14000, 30, 3));
+    waves.push_back(Wave(time.count(), 6000, 10000, 50, 3));
+    waves.push_back(Wave(time.count(), 5000, 8000, 50, 4));
+    waves.push_back(Wave(time.count(), 4000, 7000, 40, 4));
     int wave = 0;
 
     // Init cursor
@@ -147,7 +155,7 @@ int main() {
     screendex = game;
     bool running = true;
     while (running) {
-	while (gamestate == play) {
+	if (gamestate == play) {
 	    // Get elapsed time
 	    t1 = high_resolution_clock::now();
 	    time = duration_cast<milliseconds>(t1.time_since_epoch());
@@ -174,11 +182,12 @@ int main() {
 	    if (key == 'l') cursor.move(Cursor::right, ROWS, COLS);
 	    if (key == 'p') {
 		gamestate = pause;
-		break;
+		continue;
 	    }
 	    if (cash >= termplates[type].cost) {
 		if (key == 't') {
-		    if (!tiles[cursor.pos[0]][cursor.pos[1]].occupied) {
+		    if (!tiles[cursor.pos[0]][cursor.pos[1]].occupied && termplates[type].last_placed + termplates[type].cooldown < time.count()) {
+			termplates[type].last_placed = time.count();
 			cash -= termplates[type].cost;
 			Term t(type, cursor.pos[0], cursor.pos[1], time.count());
 			tiles[cursor.pos[0]][cursor.pos[1]].occupied = true;
@@ -213,9 +222,14 @@ int main() {
 		// Show term
 		termplates[i].print(screens[menu]);
 		// Highlight the selected term
-		if (type == termplates[i].type)
-		term_curse.print(screens[menu]);
-		// Render term name and cost
+		if (type == termplates[i].type) term_curse.print(screens[menu]);
+		// Render term name, cost, and if it's on cooldown
+		
+		if (termplates[i].last_placed + termplates[i].cooldown >= time.count()) {
+		    wattron(screens[menu], COLOR_PAIR(5));
+		    mvwprintw(screens[menu], termplates[i].pos[0] + 3, termplates[i].pos[1] + 4, "COOLDOWN");
+		    wattroff(screens[menu], COLOR_PAIR(5));
+		}
 		wattron(screens[menu], COLOR_PAIR(4));
 		mvwprintw(screens[menu], termplates[i].pos[0] - 1, termplates[i].pos[1] + 1, "%i. Cost: %i", i + 1, termplates[i].cost);
 		mvwprintw(screens[menu], termplates[i].pos[0] + 7, (WIDTH - termplates[i].name.size()) / 2 + termplates[i].pos[1], termplates[i].name.data());
@@ -255,7 +269,7 @@ int main() {
 
 	    // Update and render the worms
 	    for (int i = 0; i < worms.size(); i++) {
-		worms[i].update(&terms, time.count());
+		worms[i].update(&terms, &tiles, time.count());
 		worms[i].print(screens[game]);
 		mvwprintw(screens[menu], 5, gamemaxes[1] - 18, "%li", worms[0].last_time);
 	    }
@@ -297,10 +311,15 @@ int main() {
 	    cursor.print(screens[screendex]);
 
 	}
-	while (gamestate == pause) {
+	if (gamestate == pause) {
 	    key = getch();
-	    if (key == 'p') gamestate = play;
-	    if (key == 'q') running = false;
+	    if (key == 'p') {
+		gamestate = play;
+	    }
+	    if (key == 'q') {
+		running = false;
+		break;
+	    }
 
 	    wattron(screens[game], COLOR_PAIR(4));
 	    mvwprintw(screens[game], gamemaxes[0]/2-3, gamemaxes[1]/2 - 3, "Paused");
@@ -308,11 +327,10 @@ int main() {
 	    mvwprintw(screens[game], gamemaxes[0]/2+3, gamemaxes[1]/2 - 4, "q - Quit");
 	    wattroff(screens[game], COLOR_PAIR(4));
 	}
-	while (gamestate == start) {
+	if (gamestate == start) {
 	    key = getch();
 	    if (key == 'p') {
 		gamestate = play;
-		break;
 	    }
 	    if (key == 'q') {
 		running = false;
@@ -325,12 +343,13 @@ int main() {
 	    mvprintw(maxes[0]/2 + 2, maxes[1]/2-7, "Press 'q' to Quit");
 	    wattroff(screens[game], COLOR_PAIR(4));
 	}
-	while (gamestate == end) {
+	if (gamestate == end) {
 	    key = getch();
 	    if (key != ERR) running = false;
 
 	    wattron(screens[game], COLOR_PAIR(4));
-	    mvwprintw(screens[game], gamemaxes[0]/2-2, gamemaxes[1]/2 - 5, "Game Over :(");
+	    if (won) mvwprintw(screens[game], gamemaxes[0]/2-2, gamemaxes[1]/2 - 5, "Game Over :(");
+	    else mvwprintw(screens[game], gamemaxes[0]/2-2, gamemaxes[1]/2 - 5, "You Win! :)");
 	    mvwprintw(screens[game], gamemaxes[0]/2, gamemaxes[1]/2 - 9, "Press Any Key To Quit.");
 	    wattroff(screens[game], COLOR_PAIR(4));
 	}

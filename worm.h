@@ -32,8 +32,8 @@ public:
 	return false;
     }
 
-    template<typename O>
-    void move(std::vector<O> *objects, long time) {
+    template<typename O, typename T>
+    void move(std::vector<O> *objects, T* tiles, long time) {
 	if (!check_collisions(objects)) {
 	    pos[1] -= 1;
 	} else {
@@ -44,6 +44,7 @@ public:
 			(*objects)[i].health -= 10;
 			if ((*objects)[i].health <= 0) {
 			    objects->erase(objects->begin() + i);
+			    (*tiles)[(*objects)[i].row][(*objects)[i].col].occupied = false;
 			}
 		    }
 		}
@@ -51,11 +52,11 @@ public:
 	}
     }
 
-    template<typename O>
-    void update(std::vector<O> *objects, long time) {
+    template<typename O, typename T>
+    void update(std::vector<O> *objects, T* tiles, long time) {
 	if (last_time + (speed * (slowed ? 1.5 : 1)) <= time) {
 	    last_time = time;
-	    move(objects, time);
+	    move(objects, tiles, time);
 	}
     }
 
