@@ -1,4 +1,5 @@
 ### Terms Vs. Worms!
+Video Demo: https://youtu.be/HZAprc-GuDE
 ## A terminal PvZ-like game written in C++ (WIP)
 A clone of Plants Vs. Zombies written in C++ for the terminal!
 This game features your favorite programming languages as Termins (Plants), which you must strategically place along your "firewall" to successfully fend off bugs and worms (Zombies)
