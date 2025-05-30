@@ -5,9 +5,16 @@ This game features your favorite programming languages as Termins (Plants), whic
 There are 10 waves of worms total each wave increasing in volume and difficulty of worms
 
 supported on Linux and MacOS only (Or Windows with WSL).
+=======
+supported on Linux and MacOS only (Or Windows on WSL).
 
 ### Installation Instructions
-just run `g++ main.c -o TermVWorm`.
+working on Cmake support.
+Dependencies:
+  gcc compiler
+  g++ compiler
+  ncurses
+just run `g++ main.c -o TermVWorm -lncurses`.
 Then to play you can run `./TermVWorm`.
 
 ### How to play
@@ -31,3 +38,15 @@ Shoots freezing bullets that temporarily slowdown whichever worm it hits
 Shoots a high-speed and high-damage bullet
 # Pay-HP
 Generates cash every couple of seconds
+=======
+## Gameplay
+Your program is being attacked by a fleet of Bugs!
+you can't let them get to the left side or else your program will crash
+Use languages such as C-shooter, P-ice-thon and more to defend your code.
+Complete all 5 waves to win.
+
+## Controls
+WASD - Move your cursor around the map
+t/Space - Place a Term
+p - pause/unpause
+q - quit
